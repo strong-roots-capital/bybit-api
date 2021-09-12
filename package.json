@@ -2,6 +2,13 @@
   "name": "@strong-roots-capital/bybit-api",
   "version": "0.0.1",
   "description": "TypeScript API for Bybit cryptocurrency exchange",
+  "keywords": [
+    "bybit",
+    "cryptocurrency",
+    "exchange",
+    "websocket",
+    "api"
+  ],
   "homepage": "https://github.com/strong-roots-capital/bybit-api",
   "bugs": {
     "url": "https://github.com/strong-roots-capital/bybit-api/issues"
@@ -32,10 +39,23 @@
     "test": "nyc ava",
     "posttest": "npm run docs"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@strong-roots-capital/trace": "^1.2.0",
+    "debug": "^4.3.2",
+    "fp-ts": "^2.11.1",
+    "io-ts": "^2.2.16",
+    "io-ts-types": "^0.5.16",
+    "monocle-ts": "^2.3.11",
+    "newtype-ts": "^0.3.4",
+    "parser-ts": "^0.6.15",
+    "rxjs": "^7.3.0",
+    "ts-pattern": "^3.2.5",
+    "ws": "^8.2.2"
+  },
   "devDependencies": {
     "@ericcrosson/eslint-config": "^2.0.0",
-    "@types/node": "^14.14.17",
+    "@types/debug": "^4.1.7",
+    "@types/ws": "^7.4.7",
     "@typescript-eslint/eslint-plugin": "^4.11.1",
     "@typescript-eslint/parser": "^4.11.1",
     "ava": "^3.14.0",
@@ -72,13 +92,6 @@
       "ts-node/register"
     ]
   },
-  "keywords": [
-    "bybit",
-    "cryptocurrency",
-    "exchange",
-    "websocket",
-    "api"
-  ],
   "publishConfig": {
     "access": "public"
   }
