@@ -10,11 +10,11 @@ import {
   BybitTimeframe,
   BybitTimeframeFromString,
   Parser as bybitTimeframeParser,
-} from './BybitTimeframe'
+} from '../BybitTimeframe'
 import {
   BybitTradepair,
   Parser as bybitTradepairParser,
-} from './BybitTradepair'
+} from '../BybitTradepair'
 
 const subscriptionRequestSeparator = '.' as const
 

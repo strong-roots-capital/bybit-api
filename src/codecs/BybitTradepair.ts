@@ -61,6 +61,4 @@ export type BybitTradepair = t.TypeOf<typeof BybitTradepair>
  * Parser combinators
  ********************************************************************/
 
-export const Parser = S.oneOf(Object.assign(RA.Functor, RA.Foldable))(
-  bybitTradepairs,
-)
+export const Parser = S.oneOf(Object.assign(RA.Functor, RA.Foldable))(bybitTradepairs)

@@ -19,27 +19,24 @@ type BybitTimeframeAst = {
 // Note: intentionally ignoring monthly timeframe
 type BybitTimeframeUnit = 'minute' | 'hour' | 'day' | 'week'
 
-const construct: Record<
-  BybitTimeframeUnit,
-  (quantifier: number) => BybitTimeframeAst
-> = {
-  minute: (quantifier) => ({
+const construct = {
+  minute: (quantifier: number) => ({
     quantifier,
     unit: 'minute',
   }),
-  hour: (quantifier) => ({
+  hour: (quantifier: number) => ({
     quantifier,
     unit: 'hour',
   }),
-  day: (quantifier) => ({
-    quantifier,
+  day: () => ({
+    quantifier: 1,
     unit: 'day',
   }),
-  week: (quantifier) => ({
-    quantifier,
+  week: () => ({
+    quantifier: 1,
     unit: 'week',
   }),
-}
+} as const
 
 const minutesParser: P.Parser<string, BybitTimeframeAst> = pipe(
   S.float,
@@ -53,14 +50,14 @@ const hoursParser: P.Parser<string, BybitTimeframeAst> = pipe(
 )
 
 const daysParser: P.Parser<string, BybitTimeframeAst> = pipe(
-  S.float,
-  P.chainFirst(() => C.char('D')),
+  S.many(C.digit),
+  P.chain(() => C.char('D')),
   P.map(construct.day),
 )
 
 const weeksParser: P.Parser<string, BybitTimeframeAst> = pipe(
-  S.float,
-  P.chainFirst(() => C.char('W')),
+  S.many(C.digit),
+  P.chain(() => C.char('W')),
   P.map(construct.week),
 )
 
@@ -78,10 +75,7 @@ export const Parser = pipe(
  * Codecs
  ********************************************************************/
 
-const Int = withMessage(
-  t.Int,
-  (i) => `Expected value "${i}" to be a whole number`,
-)
+const Int = withMessage(t.Int, (i) => `Expected value "${i}" to be a whole number`)
 
 /**
  * Timeframe Quantifiers
@@ -94,24 +88,16 @@ const BybitTimeframeMinutesQuantifier = t.intersection([
   Int,
   t.union([t.literal(1), t.literal(60)]),
 ])
-type BybitTimeframeMinutesQuantifier = t.TypeOf<
-  typeof BybitTimeframeMinutesQuantifier
->
+type BybitTimeframeMinutesQuantifier = t.TypeOf<typeof BybitTimeframeMinutesQuantifier>
 
 const BybitTimeframeHoursQuantifier = t.intersection([Int, t.literal(1)])
-type BybitTimeframeHoursQuantifier = t.TypeOf<
-  typeof BybitTimeframeHoursQuantifier
->
+type BybitTimeframeHoursQuantifier = t.TypeOf<typeof BybitTimeframeHoursQuantifier>
 
 const BybitTimeframeDaysQuantifier = t.intersection([Int, t.literal(1)])
-type BybitTimeframeDaysQuantifier = t.TypeOf<
-  typeof BybitTimeframeDaysQuantifier
->
+type BybitTimeframeDaysQuantifier = t.TypeOf<typeof BybitTimeframeDaysQuantifier>
 
 const BybitTimeframeWeeksQuantifier = t.intersection([Int, t.literal(1)])
-type BybitTimeframeWeeksQuantifier = t.TypeOf<
-  typeof BybitTimeframeWeeksQuantifier
->
+type BybitTimeframeWeeksQuantifier = t.TypeOf<typeof BybitTimeframeWeeksQuantifier>
 
 /**
  * BybitTimeframes
@@ -152,13 +138,24 @@ export type BybitTimeframe = t.TypeOf<typeof BybitTimeframe>
 const charEncoded = (unit: BybitTimeframeUnit) => {
   switch (unit) {
     case 'minute':
-      return ''
     case 'hour':
-      return 'H'
+      return ''
     case 'day':
       return 'D'
     case 'week':
       return 'W'
+  }
+}
+
+const quantifierEncoded = (timeframe: BybitTimeframe) => {
+  switch (timeframe.unit) {
+    case 'minute':
+      return timeframe.quantifier.toString()
+    case 'hour':
+      return inMinutes(timeframe).toString()
+    case 'day':
+    case 'week':
+      return ''
   }
 }
 
@@ -167,9 +164,7 @@ const minutesInHour = 60
 const minutesInDay = 60 * 24
 const minutesInWeek = 60 * 24 * 7
 
-const multiplier = (
-  unit: BybitTimeframeUnit,
-): BybitTimeframeMinutesQuantifier => {
+const multiplier = (unit: BybitTimeframeUnit): BybitTimeframeMinutesQuantifier => {
   switch (unit) {
     case 'minute':
       return minutesInMinute as BybitTimeframeMinutesQuantifier
@@ -208,11 +203,7 @@ const withGreatestUnit = (a: BybitTimeframe): BybitTimeframe => {
   }
 }
 
-export const BybitTimeframeFromString = new t.Type<
-  BybitTimeframe,
-  string,
-  unknown
->(
+export const BybitTimeframeFromString = new t.Type<BybitTimeframe, string, unknown>(
   'BybitTimeframeFromString',
   BybitTimeframe.is,
   (u, c) => {
@@ -232,6 +223,6 @@ export const BybitTimeframeFromString = new t.Type<
       E.map(withGreatestUnit),
     )
   },
-  (timeframe) => [timeframe.quantifier, charEncoded(timeframe.unit)].join(''),
+  (timeframe) => [quantifierEncoded(timeframe), charEncoded(timeframe.unit)].join(''),
 )
 export type BybitTimeframeFromString = t.TypeOf<typeof BybitTimeframeFromString>

@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@strong-roots-capital/trace": "^1.2.0",
+    "axios": "^0.21.4",
     "debug": "^4.3.2",
     "fp-ts": "^2.11.1",
     "io-ts": "^2.2.16",

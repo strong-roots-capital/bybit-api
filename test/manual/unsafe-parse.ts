@@ -7,10 +7,7 @@ import * as t from 'io-ts'
 export function unsafeParse<C extends t.Mixed>(
   codec: C,
 ): (value: unknown) => t.TypeOf<C>
-export function unsafeParse<C extends t.Mixed>(
-  codec: C,
-  value: unknown,
-): t.TypeOf<C>
+export function unsafeParse<C extends t.Mixed>(codec: C, value: unknown): t.TypeOf<C>
 /**
  * Decode value with codec or `throw`.
  *
@@ -27,9 +24,7 @@ export function unsafeParse<C extends t.Mixed>(
     pipe(
       codec.decode(value),
       E.getOrElseW(() => {
-        throw new Error(
-          `ParseError: unable to decode ${value} into type ${codec.name}`,
-        )
+        throw new Error(`ParseError: unable to decode ${value} into type ${codec.name}`)
       }),
     )
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return

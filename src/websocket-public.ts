@@ -17,8 +17,8 @@ import { webSocket } from 'rxjs/webSocket'
 import { match } from 'ts-pattern'
 import WebSocket from 'ws'
 
-import { BybitKlineSubscriptionRequest } from './codecs/BybitKlineSubscriptionRequest'
-import { BybitSubscriptionRequest } from './codecs/BybitSubscriptionRequest'
+import { BybitKlineSubscriptionRequest } from './codecs/ws/BybitKlineSubscriptionRequest'
+import { BybitSubscriptionRequest } from './codecs/ws/BybitSubscriptionRequest'
 import { BybitChannelMessage } from './codecs/ws/BybitChannelMessage'
 import { BybitKline } from './codecs/ws/BybitKline'
 import { BybitSubscriptionResponse } from './codecs/ws/BybitSubscriptionResponse'
@@ -145,7 +145,7 @@ export const bybitPublicWebsocket = (
           )
           const resolver = O.fromNullable(pending.get(response.request.args[0]))
           pending.delete(response.request.args[0])
-          // TODO: use REST api to fetch candles and pre-load the ws stream
+          // TODO: use REST API to fetch candles and pre-load the ws stream
           // NOTE: DO NOT fetch the REST data in parallel with the WS open response
           const stream = new BehaviorSubject<BybitChannelMessage[]>([])
           pipe(
