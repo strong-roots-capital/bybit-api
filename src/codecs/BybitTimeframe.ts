@@ -11,7 +11,7 @@ import * as S from 'parser-ts/string'
  * Parser combinators
  ********************************************************************/
 
-type BybitTimeframeAst = {
+export type BybitTimeframeAst = {
   quantifier: number
   unit: string
 }
@@ -103,36 +103,46 @@ type BybitTimeframeWeeksQuantifier = t.TypeOf<typeof BybitTimeframeWeeksQuantifi
  * BybitTimeframes
  */
 
-const BybitTimeframeMinutes = t.type({
-  quantifier: BybitTimeframeMinutesQuantifier,
-  unit: t.literal('minute'),
-})
+const BybitTimeframeMinutes = t.type(
+  {
+    quantifier: BybitTimeframeMinutesQuantifier,
+    unit: t.literal('minute'),
+  },
+  'BybitTimeframeMinutes',
+)
 type BybitTimeframeMinutes = t.TypeOf<typeof BybitTimeframeMinutes>
 
-const BybitTimeframeHours = t.type({
-  quantifier: BybitTimeframeHoursQuantifier,
-  unit: t.literal('hour'),
-})
+const BybitTimeframeHours = t.type(
+  {
+    quantifier: BybitTimeframeHoursQuantifier,
+    unit: t.literal('hour'),
+  },
+  'BybitTimeframeHours',
+)
 type BybitTimeframeHours = t.TypeOf<typeof BybitTimeframeHours>
 
-const BybitTimeframeDays = t.type({
-  quantifier: BybitTimeframeDaysQuantifier,
-  unit: t.literal('day'),
-})
+const BybitTimeframeDays = t.type(
+  {
+    quantifier: BybitTimeframeDaysQuantifier,
+    unit: t.literal('day'),
+  },
+  'BybitTimeframeDays',
+)
 type BybitTimeframeDays = t.TypeOf<typeof BybitTimeframeDays>
 
-const BybitTimeframeWeeks = t.type({
-  quantifier: BybitTimeframeWeeksQuantifier,
-  unit: t.literal('week'),
-})
+const BybitTimeframeWeeks = t.type(
+  {
+    quantifier: BybitTimeframeWeeksQuantifier,
+    unit: t.literal('week'),
+  },
+  'BybitTimeframeWeeks',
+)
 type BybitTimeframeWeeks = t.TypeOf<typeof BybitTimeframeWeeks>
 
-export const BybitTimeframe = t.union([
-  BybitTimeframeMinutes,
-  BybitTimeframeHours,
-  BybitTimeframeDays,
-  BybitTimeframeWeeks,
-])
+export const BybitTimeframe = t.union(
+  [BybitTimeframeMinutes, BybitTimeframeHours, BybitTimeframeDays, BybitTimeframeWeeks],
+  'BybitTimeframe',
+)
 export type BybitTimeframe = t.TypeOf<typeof BybitTimeframe>
 
 const charEncoded = (unit: BybitTimeframeUnit) => {
@@ -144,18 +154,6 @@ const charEncoded = (unit: BybitTimeframeUnit) => {
       return 'D'
     case 'week':
       return 'W'
-  }
-}
-
-const quantifierEncoded = (timeframe: BybitTimeframe) => {
-  switch (timeframe.unit) {
-    case 'minute':
-      return timeframe.quantifier.toString()
-    case 'hour':
-      return inMinutes(timeframe).toString()
-    case 'day':
-    case 'week':
-      return ''
   }
 }
 
@@ -179,6 +177,18 @@ const multiplier = (unit: BybitTimeframeUnit): BybitTimeframeMinutesQuantifier =
 
 export const inMinutes = (a: BybitTimeframe): BybitTimeframeMinutesQuantifier =>
   (a.quantifier * multiplier(a.unit)) as BybitTimeframeMinutes['quantifier']
+
+const quantifierEncoded = (timeframe: BybitTimeframe) => {
+  switch (timeframe.unit) {
+    case 'minute':
+      return timeframe.quantifier.toString()
+    case 'hour':
+      return inMinutes(timeframe).toString()
+    case 'day':
+    case 'week':
+      return ''
+  }
+}
 
 // Represent a timeframe with the greatest `unit` property possible
 const withGreatestUnit = (a: BybitTimeframe): BybitTimeframe => {

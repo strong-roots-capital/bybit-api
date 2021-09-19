@@ -11,6 +11,7 @@
     "target": "es5",
     "module": "commonjs",
     "lib": [
+      "dom",
       "es6"
     ],
     "moduleResolution": "node",
@@ -22,7 +23,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
     "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
     "downlevelIteration": true,

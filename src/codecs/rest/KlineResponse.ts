@@ -15,3 +15,4 @@ export const KlineResponse = t.type({
   volume: NumberFromString,
   turnover: NumberFromString,
 })
+export type KlineResponse = t.TypeOf<typeof KlineResponse>

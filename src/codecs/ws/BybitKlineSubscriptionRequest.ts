@@ -8,13 +8,11 @@ import * as S from 'parser-ts/string'
 
 import {
   BybitTimeframe,
+  BybitTimeframeAst,
   BybitTimeframeFromString,
   Parser as bybitTimeframeParser,
 } from '../BybitTimeframe'
-import {
-  BybitTradepair,
-  Parser as bybitTradepairParser,
-} from '../BybitTradepair'
+import { BybitTradepair, Parser as bybitTradepairParser } from '../BybitTradepair'
 
 const subscriptionRequestSeparator = '.' as const
 
@@ -24,32 +22,29 @@ const subscriptionRequestSeparator = '.' as const
 
 type BybitKlineSubscriptionRequestAst = {
   channel: string
-  timeframe: {
-    quantifier: number
-    unit: string
-  }
-  tradepair: string
+  interval: BybitTimeframeAst
+  symbol: string
 }
 
 const constructBybitKlineSubscriptionRequestAst = ({
-  timeframe,
-  tradepair,
+  interval,
+  symbol,
 }: Omit<
   BybitKlineSubscriptionRequestAst,
   'channel'
 >): BybitKlineSubscriptionRequestAst => ({
   channel: 'klineV2',
-  timeframe,
-  tradepair,
+  interval,
+  symbol,
 })
 
 export const Parser = pipe(
   S.string('klineV2'),
   P.chain(() => C.char(subscriptionRequestSeparator)),
   P.chain(() => bybitTimeframeParser),
-  P.bindTo('timeframe'),
+  P.bindTo('interval'),
   P.chainFirst(() => C.char(subscriptionRequestSeparator)),
-  P.bind('tradepair', () => bybitTradepairParser),
+  P.bind('symbol', () => bybitTradepairParser),
   P.map(constructBybitKlineSubscriptionRequestAst),
 )
 
@@ -59,8 +54,8 @@ export const Parser = pipe(
 
 export const BybitKlineSubscriptionRequest = t.type({
   channel: t.literal('klineV2'),
-  timeframe: BybitTimeframe,
-  tradepair: BybitTradepair,
+  interval: BybitTimeframe,
+  symbol: BybitTradepair,
 })
 export type BybitKlineSubscriptionRequest = t.TypeOf<
   typeof BybitKlineSubscriptionRequest
@@ -92,7 +87,7 @@ export const BybitKlineSubscriptionRequestFromString = new t.Type<
   (request) =>
     [
       t.string.encode(request.channel),
-      BybitTimeframeFromString.encode(request.timeframe),
-      BybitTradepair.encode(request.tradepair),
+      BybitTimeframeFromString.encode(request.interval),
+      BybitTradepair.encode(request.symbol),
     ].join(subscriptionRequestSeparator),
 )

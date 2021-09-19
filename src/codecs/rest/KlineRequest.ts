@@ -13,6 +13,6 @@ export const KlineRequest = t.intersection([
   t.partial({
     // Must be between 0 and 200
     limit: t.Int,
-  })
+  }),
 ])
-export type KlineRequest = t.TypeOf<typeof KlineRequest>;
+export type KlineRequest = t.TypeOf<typeof KlineRequest>

@@ -48,6 +48,7 @@
     "io-ts-types": "^0.5.16",
     "monocle-ts": "^2.3.11",
     "newtype-ts": "^0.3.4",
+    "od": "^4.0.4",
     "parser-ts": "^0.6.15",
     "rxjs": "^7.3.0",
     "ts-pattern": "^3.2.5",

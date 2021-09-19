@@ -1,9 +1,9 @@
-import * as t from 'io-ts'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
+import * as t from 'io-ts'
 import { NumberFromString } from 'io-ts-types'
 
-interface DateFromUnixTimeC extends t.Type<Date, number, unknown> {}
+type DateFromUnixTimeC = t.Type<Date, number>
 
 const DateFromUnixTime: DateFromUnixTimeC = new t.Type<Date, number, unknown>(
   'DateFromUnixTime',
@@ -33,3 +33,12 @@ export const BybitRestMessage = <C extends t.Mixed>(codec: C) =>
     },
     'BybitRestMessage',
   )
+
+export type BybitRestMessage<T> = {
+  ret_code: t.Int
+  ret_msg: string
+  ext_code: string
+  ext_info: string
+  result: Array<T>
+  time_now: Date
+}

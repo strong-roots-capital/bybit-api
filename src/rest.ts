@@ -1,21 +1,21 @@
-import Debug from 'debug'
-import * as t from 'io-ts'
-import * as TE from 'fp-ts/TaskEither'
-import * as E from 'fp-ts/Either'
-import * as R from 'fp-ts/Record'
-import { pipe, flow } from 'fp-ts/function'
 import Axios from 'axios'
 import type { AxiosInstance, AxiosResponse } from 'axios'
+import Debug from 'debug'
+import * as E from 'fp-ts/Either'
+import * as R from 'fp-ts/Record'
+import * as TE from 'fp-ts/TaskEither'
+import { pipe, flow } from 'fp-ts/function'
+import * as t from 'io-ts'
 import * as PathReporter from 'io-ts/lib/PathReporter'
 
+import { AxiosResponse as AxiosResponseC } from './codecs/rest/AxiosResponse'
+import { BybitRestMessage } from './codecs/rest/BybitRestMessage'
 import { KlineRequest } from './codecs/rest/KlineRequest'
 import { KlineResponse } from './codecs/rest/KlineResponse'
-import { BybitRestMessage } from './codecs/rest/BybitRestMessage'
-import { AxiosResponse as AxiosResponseC } from './codecs/rest/AxiosResponse'
 
 const debug = {
   request: Debug('bybit:rest:request'),
-  response: Debug('bybit:rest:request'),
+  response: Debug('bybit:rest:response'),
 } as const
 
 type BybitUnexpectedRequestError = {
@@ -63,7 +63,7 @@ type BybitRestApiRequest<T> = T extends BybitApiEndpoint<infer A, any>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type BybitRestApiResponse<T> = T extends BybitApiEndpoint<any, infer A>
-  ? t.TypeOf<A>
+  ? BybitRestMessage<t.TypeOf<A>>
   : never
 
 const PublicRestApi = {
@@ -109,12 +109,14 @@ const httpRequest = <C extends t.Mixed>({
   method: 'get'
   resource: string
 }): TE.TaskEither<BybitHttpRequestError, AxiosResponse<unknown>> => {
-  const params = requestCodec.encode(request)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const params: t.OutputOf<C> = requestCodec.encode(request)
   return pipe(
     TE.fromIO<void, never>(() => debug.request('%s %s', resource, params)),
     TE.chain(() =>
       TE.tryCatch(
-        () => axios[method](resource, { params }),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        async () => axios[method](resource, { params }),
         flow(
           E.toError,
           (error): BybitHttpRequestError => ({
@@ -129,7 +131,7 @@ const httpRequest = <C extends t.Mixed>({
 
 const decodeResponse = <C extends t.Mixed>(codec: C) => (response: unknown) =>
   pipe(
-    TE.fromEither(codec.decode(response)),
+    TE.fromEither(AxiosResponseC(codec).decode(response)),
     TE.chainFirstIOK((_) => () => debug.response('%s', _.data)),
     TE.bimap(
       flow(
@@ -140,6 +142,7 @@ const decodeResponse = <C extends t.Mixed>(codec: C) => (response: unknown) =>
           error: errors.join('\n'),
         }),
       ),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       (_) => _.data,
     ),
   )
@@ -157,14 +160,12 @@ export const bybitRestClient = (
   const publicApi = pipe(
     PublicRestApi,
     R.map(
-      ({
-        method,
-        resource,
-        request: requestCodec,
-        response: responseCodec,
-      }) => (
+      ({ method, resource, request: requestCodec, response: responseCodec }) => (
         request: t.TypeOf<typeof requestCodec>,
-      ): TE.TaskEither<BybitRestApiError, t.TypeOf<typeof responseCodec>> =>
+      ): TE.TaskEither<
+        BybitRestApiError,
+        BybitRestMessage<t.TypeOf<typeof responseCodec>>
+      > =>
         pipe(
           TE.fromEither(validateRequestFormat(requestCodec)(request)),
           TE.chainW(() =>
@@ -176,9 +177,8 @@ export const bybitRestClient = (
               resource,
             }),
           ),
-          TE.chainW(
-            decodeResponse(AxiosResponseC(BybitRestMessage(responseCodec))),
-          ),
+          TE.chainW(decodeResponse(BybitRestMessage(responseCodec))),
+          TE.map((value) => value),
         ),
     ),
   )
