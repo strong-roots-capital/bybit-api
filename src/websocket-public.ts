@@ -60,18 +60,21 @@ const wsKline = ({
   interval: BybitTimeframe
   kline: KlineResponse
   timestamp: Date
-}): BybitKline => ({
-  start: kline.open_time,
-  end: D.add(interval.unit, interval.quantifier, kline.open_time),
-  open: kline.open,
-  close: kline.close,
-  high: kline.high,
-  low: kline.low,
-  volume: kline.volume,
-  turnover: kline.turnover,
-  timestamp,
-  confirm: true,
-})
+}): BybitKline => {
+  const end = D.add(interval.unit, interval.quantifier, kline.open_time)
+  return {
+    start: kline.open_time,
+    end,
+    open: kline.open,
+    close: kline.close,
+    high: kline.high,
+    low: kline.low,
+    volume: kline.volume,
+    turnover: kline.turnover,
+    timestamp,
+    confirm: end < timestamp,
+  }
+}
 
 const decodeBybitChannelMessage = (message: BybitWebsocketMessage) =>
   pipe(
@@ -154,8 +157,8 @@ export const bybitPublicWebsocket = (
   }
 
   // handle messages at the library level to implement inverse-multiplexing
-  subject.subscribe(
-    (message) => {
+  subject.subscribe({
+    next: (message) => {
       // BybitWebsocketMessage.is is a "fromString" decoder, so we have to
       // decode before invoking the type-guard in the match statement below
       const decoded = t
@@ -192,6 +195,10 @@ export const bybitPublicWebsocket = (
                 ),
               ({ data, topic, subscribee }) => async () => {
                 if (!subscribee.initialized) {
+                  const openTime = pipe(
+                    data[0].start,
+                    D.subtract(topic.interval.unit, topic.interval.quantifier),
+                  )
                   // sequence publication of the rest data
                   subscribee.promise = subscribee.promise.then(async () =>
                     // Note: Nobody is listening to these errors so they have to be fatal
@@ -199,8 +206,7 @@ export const bybitPublicWebsocket = (
                       restClient.kline({
                         symbol: topic.symbol,
                         interval: topic.interval,
-                        // TODO: support arbitrary timeframes
-                        from: pipe(data[0].start, D.subtract('minute', 1)),
+                        from: openTime,
                         limit: one,
                       }),
                       TE.fold(
@@ -213,16 +219,20 @@ export const bybitPublicWebsocket = (
                           }),
                         (response) =>
                           T.fromIO(() => {
-                            if (!response.result[0]) {
+                            const previousCandle = response.result.filter(
+                              (kline) =>
+                                kline.open_time.getTime() === openTime.getTime(),
+                            )
+                            if (!previousCandle[0]) {
                               throw new Error(
-                                'Expected kline query to return non-empty array',
+                                'Expected kline query to return previous candle',
                               )
                             }
                             subscribee.initialized = true
                             subscribee.subject.next([
                               wsKline({
                                 interval: topic.interval,
-                                kline: response.result[0],
+                                kline: previousCandle[0],
                                 timestamp: response.time_now,
                               }),
                             ])
@@ -269,9 +279,9 @@ export const bybitPublicWebsocket = (
         })
         .otherwise(() => debug.warn('unmatched message:', JSON.stringify(message)))
     },
-    console.error,
-    constVoid,
-  )
+    error: console.error,
+    complete: constVoid,
+  })
 
   return { subscribe }
 }

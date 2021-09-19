@@ -13,7 +13,11 @@ async function main() {
     symbol: 'BTCUSD',
   })
 
-  stream.subscribe((_) => console.log(_), console.error, constVoid)
+  stream.subscribe({
+    next: console.log,
+    error: console.error,
+    complete: constVoid,
+  })
 }
 
 main()
