@@ -1,6 +1,7 @@
+import * as util from 'util'
+
 import Axios from 'axios'
 import type { AxiosInstance, AxiosResponse } from 'axios'
-import Debug from 'debug'
 import * as E from 'fp-ts/Either'
 import * as R from 'fp-ts/Record'
 import * as TE from 'fp-ts/TaskEither'
@@ -12,10 +13,11 @@ import { AxiosResponse as AxiosResponseC } from './codecs/rest/AxiosResponse'
 import { BybitRestMessage } from './codecs/rest/BybitRestMessage'
 import { KlineRequest } from './codecs/rest/KlineRequest'
 import { KlineResponse } from './codecs/rest/KlineResponse'
+import { log } from './log'
 
 const debug = {
-  request: Debug('bybit:rest:request'),
-  response: Debug('bybit:rest:response'),
+  request: log.tag('bybit:rest:request'),
+  response: log.tag('bybit:rest:response'),
 } as const
 
 type BybitUnexpectedRequestError = {
@@ -108,15 +110,15 @@ const httpRequest = <C extends t.Mixed>({
   requestCodec: C
   method: 'get'
   resource: string
-}): TE.TaskEither<BybitHttpRequestError, AxiosResponse<unknown>> => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const params: t.OutputOf<C> = requestCodec.encode(request)
-  return pipe(
-    TE.fromIO<void, never>(() => debug.request('%s %s', resource, params)),
+}): TE.TaskEither<BybitHttpRequestError, AxiosResponse<unknown>> =>
+  pipe(
+    TE.fromIO<void, never>(() =>
+      debug.request(util.format('%s %s', resource, JSON.stringify(request))),
+    ),
     TE.chain(() =>
       TE.tryCatch(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        async () => axios[method](resource, { params }),
+        async () => axios[method](resource, { params: requestCodec.encode(request) }),
         flow(
           E.toError,
           (error): BybitHttpRequestError => ({
@@ -127,12 +129,11 @@ const httpRequest = <C extends t.Mixed>({
       ),
     ),
   )
-}
 
 const decodeResponse = <C extends t.Mixed>(codec: C) => (response: unknown) =>
   pipe(
     TE.fromEither(AxiosResponseC(codec).decode(response)),
-    TE.chainFirstIOK((_) => () => debug.response('%s', _.data)),
+    TE.chainFirstIOK((_) => () => debug.response(JSON.stringify(_.data))),
     TE.bimap(
       flow(
         PathReporter.failure,

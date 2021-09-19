@@ -2,8 +2,8 @@
  * Note: currently only supports inverse perpetual swaps
  */
 
-import { trace } from '@strong-roots-capital/trace'
-import Debug from 'debug'
+import * as util from 'util'
+
 import * as Console from 'fp-ts/Console'
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
@@ -31,11 +31,13 @@ import {
 import { BybitSubscriptionRequest } from './codecs/ws/BybitSubscriptionRequest'
 import { BybitSubscriptionResponse } from './codecs/ws/BybitSubscriptionResponse'
 import { BybitWebsocketMessage } from './codecs/ws/BybitWebsocketMessage'
+import { log } from './log'
 import { bybitRestClient } from './rest'
 
 const debug = {
-  ws: Debug('bybit:websocket'),
-  kline: Debug('bybit:kline'),
+  warn: log.tag('warning'),
+  ws: log.tag('bybit:websocket'),
+  kline: log.tag('bybit:kline'),
 } as const
 
 export type BybitPublicWebsocket = {
@@ -60,7 +62,6 @@ const wsKline = ({
   timestamp: Date
 }): BybitKline => ({
   start: kline.open_time,
-  // FIXME: parameterize
   end: D.add(interval.unit, interval.quantifier, kline.open_time),
   open: kline.open,
   close: kline.close,
@@ -75,7 +76,8 @@ const wsKline = ({
 const decodeBybitChannelMessage = (message: BybitWebsocketMessage) =>
   pipe(
     TE.fromEither(nonEmptyArray(BybitChannelMessage).decode(message.data)),
-    TE.bimap(
+    TE.chainFirstIOK((_) => () => debug.kline(JSON.stringify(_))),
+    TE.mapLeft(
       flow(
         (error) => PathReporter.failure(error),
         (errors) => ({
@@ -83,7 +85,6 @@ const decodeBybitChannelMessage = (message: BybitWebsocketMessage) =>
           error: errors.join('\n'),
         }),
       ),
-      trace(debug.kline),
     ),
   )
 
@@ -122,10 +123,12 @@ export const bybitPublicWebsocket = (
   async function subscribe(request: BybitSubscriptionRequest) {
     return new Promise((resolve, reject) => {
       debug.ws(
-        'Received request to subscribe to %s %s %s',
-        request.channel,
-        request.symbol,
-        request.interval,
+        util.format(
+          'Received request to subscribe to %s %s %s',
+          request.channel,
+          request.symbol,
+          request.interval,
+        ),
       )
 
       const encodedRequest = BybitSubscriptionRequest.encode(request)
@@ -243,8 +246,10 @@ export const bybitPublicWebsocket = (
         )
         .when(BybitSubscriptionResponse.is, (response) => {
           debug.ws(
-            'Subscription handeshake complete for %s',
-            JSON.stringify(response.request.args),
+            util.format(
+              'Subscription handeshake complete for %s',
+              JSON.stringify(response.request.args),
+            ),
           )
           const resolver = O.fromNullable(pending.get(response.request.args[0]))
           pending.delete(response.request.args[0])
@@ -262,7 +267,7 @@ export const bybitPublicWebsocket = (
             }),
           )
         })
-        .otherwise(() => console.warn('unmatched message:', JSON.stringify(message)))
+        .otherwise(() => debug.warn('unmatched message:', JSON.stringify(message)))
     },
     console.error,
     constVoid,

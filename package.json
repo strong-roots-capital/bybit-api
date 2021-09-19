@@ -40,9 +40,7 @@
     "posttest": "npm run docs"
   },
   "dependencies": {
-    "@strong-roots-capital/trace": "^1.2.0",
     "axios": "^0.21.4",
-    "debug": "^4.3.2",
     "fp-ts": "^2.11.1",
     "io-ts": "^2.2.16",
     "io-ts-types": "^0.5.16",
@@ -50,13 +48,13 @@
     "newtype-ts": "^0.3.4",
     "od": "^4.0.4",
     "parser-ts": "^0.6.15",
+    "ratlog": "^1.0.3",
     "rxjs": "^7.3.0",
     "ts-pattern": "^3.2.5",
     "ws": "^8.2.2"
   },
   "devDependencies": {
     "@ericcrosson/eslint-config": "^2.0.0",
-    "@types/debug": "^4.1.7",
     "@types/ws": "^7.4.7",
     "@typescript-eslint/eslint-plugin": "^4.11.1",
     "@typescript-eslint/parser": "^4.11.1",
