@@ -84,7 +84,7 @@ type BybitPublicRestApiClient = {
   ) => TE.TaskEither<BybitRestApiError, BybitRestApiResponse<PublicRestApi[A]>>
 }
 
-type BybitRestClient = BybitPublicRestApiClient
+export type BybitRestClient = BybitPublicRestApiClient
 
 // Avoid `decode` because we want to supply A, not I
 const validateRequestFormat = <C extends t.Mixed>(codec: C) => (
