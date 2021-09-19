@@ -11,9 +11,9 @@ import * as t from 'io-ts'
 import * as PathReporter from 'io-ts/lib/PathReporter'
 
 import { AxiosResponse as AxiosResponseC } from './codecs/rest/AxiosResponse'
+import { BybitRestKlineRequest } from './codecs/rest/BybitRestKlineRequest'
+import { BybitRestKlineResponse } from './codecs/rest/BybitRestKlineResponse'
 import { BybitRestMessage } from './codecs/rest/BybitRestMessage'
-import { KlineRequest } from './codecs/rest/KlineRequest'
-import { KlineResponse } from './codecs/rest/KlineResponse'
 
 const debug = {
   request: log.tag('bybit:rest:request'),
@@ -72,8 +72,8 @@ const PublicRestApi = {
   kline: {
     method: 'get',
     resource: 'v2/public/kline/list',
-    request: KlineRequest,
-    response: KlineResponse,
+    request: BybitRestKlineRequest,
+    response: BybitRestKlineResponse,
   },
 } as const
 type PublicRestApi = typeof PublicRestApi

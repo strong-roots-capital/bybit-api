@@ -4,7 +4,7 @@ import { DateFromUnixTime, NumberFromString } from 'io-ts-types'
 import { BybitTimeframeFromString } from '../BybitTimeframe'
 import { BybitTradepair } from '../BybitTradepair'
 
-export const KlineResponse = t.type({
+export const BybitRestKlineResponse = t.type({
   symbol: BybitTradepair,
   interval: BybitTimeframeFromString,
   open_time: DateFromUnixTime,
@@ -15,4 +15,4 @@ export const KlineResponse = t.type({
   volume: NumberFromString,
   turnover: NumberFromString,
 })
-export type KlineResponse = t.TypeOf<typeof KlineResponse>
+export type BybitRestKlineResponse = t.TypeOf<typeof BybitRestKlineResponse>

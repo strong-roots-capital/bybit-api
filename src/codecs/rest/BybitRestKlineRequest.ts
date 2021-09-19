@@ -4,7 +4,7 @@ import { DateFromUnixTime } from 'io-ts-types'
 import { BybitTimeframeFromString } from '../BybitTimeframe'
 import { BybitTradepair } from '../BybitTradepair'
 
-export const KlineRequest = t.intersection([
+export const BybitRestKlineRequest = t.intersection([
   t.type({
     symbol: BybitTradepair,
     interval: BybitTimeframeFromString,
@@ -15,4 +15,4 @@ export const KlineRequest = t.intersection([
     limit: t.Int,
   }),
 ])
-export type KlineRequest = t.TypeOf<typeof KlineRequest>
+export type BybitRestKlineRequest = t.TypeOf<typeof BybitRestKlineRequest>

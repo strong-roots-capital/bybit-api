@@ -14,7 +14,7 @@ export const DateFromUnixTimeInNanoseconds = new t.Type<Date, number, unknown>(
   (date) => date.getTime() * 1000,
 )
 
-export const BybitKline = t.type({
+export const BybitWebsocketKline = t.type({
   start: DateFromUnixTime,
   end: DateFromUnixTime,
   open: t.number,
@@ -26,4 +26,4 @@ export const BybitKline = t.type({
   timestamp: DateFromUnixTimeInNanoseconds,
   confirm: t.boolean,
 })
-export type BybitKline = t.TypeOf<typeof BybitKline>
+export type BybitWebsocketKline = t.TypeOf<typeof BybitWebsocketKline>

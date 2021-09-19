@@ -1,6 +1,6 @@
 import * as t from 'io-ts'
 
-import { BybitKline } from './BybitKline'
+import { BybitWebsocketKline } from './BybitWebsocketKline'
 
-export const BybitChannelMessage = BybitKline
+export const BybitChannelMessage = BybitWebsocketKline
 export type BybitChannelMessage = t.TypeOf<typeof BybitChannelMessage>

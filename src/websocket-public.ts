@@ -21,16 +21,16 @@ import { match } from 'ts-pattern'
 import WebSocket from 'ws'
 
 import { BybitTimeframe } from './codecs/BybitTimeframe'
-import { KlineResponse } from './codecs/rest/KlineResponse'
+import { BybitRestKlineResponse } from './codecs/rest/BybitRestKlineResponse'
 import { unsafeParse } from './codecs/unsafe-parse'
 import { BybitChannelMessage } from './codecs/ws/BybitChannelMessage'
-import { BybitKline } from './codecs/ws/BybitKline'
 import {
   BybitKlineSubscriptionRequest,
   BybitKlineSubscriptionRequestFromString,
 } from './codecs/ws/BybitKlineSubscriptionRequest'
 import { BybitSubscriptionRequest } from './codecs/ws/BybitSubscriptionRequest'
 import { BybitSubscriptionResponse } from './codecs/ws/BybitSubscriptionResponse'
+import { BybitWebsocketKline } from './codecs/ws/BybitWebsocketKline'
 import { BybitWebsocketMessage } from './codecs/ws/BybitWebsocketMessage'
 import { bybitRestClient } from './rest'
 
@@ -43,7 +43,7 @@ const debug = {
 export type BybitPublicWebsocket = {
   subscribe(
     request: BybitKlineSubscriptionRequest,
-  ): Promise<BehaviorSubject<BybitKline[]>>
+  ): Promise<BehaviorSubject<BybitWebsocketKline[]>>
 }
 
 export type BybitPublicWebsocketSettings = {
@@ -58,9 +58,9 @@ const wsKline = ({
   timestamp,
 }: {
   interval: BybitTimeframe
-  kline: KlineResponse
+  kline: BybitRestKlineResponse
   timestamp: Date
-}): BybitKline => {
+}): BybitWebsocketKline => {
   const end = D.add(interval.unit, interval.quantifier, kline.open_time)
   return {
     start: kline.open_time,
@@ -122,7 +122,7 @@ export const bybitPublicWebsocket = (
 
   async function subscribe(
     request: BybitKlineSubscriptionRequest,
-  ): Promise<BehaviorSubject<BybitKline[]>>
+  ): Promise<BehaviorSubject<BybitWebsocketKline[]>>
   async function subscribe(request: BybitSubscriptionRequest) {
     return new Promise((resolve, reject) => {
       debug.ws(
