@@ -4,6 +4,7 @@
 
 import * as util from 'util'
 
+import { log } from '@strong-roots-capital/ratlog-debug'
 import * as Console from 'fp-ts/Console'
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
@@ -31,7 +32,6 @@ import {
 import { BybitSubscriptionRequest } from './codecs/ws/BybitSubscriptionRequest'
 import { BybitSubscriptionResponse } from './codecs/ws/BybitSubscriptionResponse'
 import { BybitWebsocketMessage } from './codecs/ws/BybitWebsocketMessage'
-import { log } from './log'
 import { bybitRestClient } from './rest'
 
 const debug = {

@@ -1,5 +1,6 @@
 import * as util from 'util'
 
+import { log } from '@strong-roots-capital/ratlog-debug'
 import Axios from 'axios'
 import type { AxiosInstance, AxiosResponse } from 'axios'
 import * as E from 'fp-ts/Either'
@@ -13,7 +14,6 @@ import { AxiosResponse as AxiosResponseC } from './codecs/rest/AxiosResponse'
 import { BybitRestMessage } from './codecs/rest/BybitRestMessage'
 import { KlineRequest } from './codecs/rest/KlineRequest'
 import { KlineResponse } from './codecs/rest/KlineResponse'
-import { log } from './log'
 
 const debug = {
   request: log.tag('bybit:rest:request'),
