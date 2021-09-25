@@ -179,7 +179,6 @@ export const bybitRestClient = (
             }),
           ),
           TE.chainW(decodeResponse(BybitRestMessage(responseCodec))),
-          TE.map((value) => value),
         ),
     ),
   )

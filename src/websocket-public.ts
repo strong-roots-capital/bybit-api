@@ -15,7 +15,7 @@ import * as t from 'io-ts'
 import { nonEmptyArray } from 'io-ts-types'
 import * as PathReporter from 'io-ts/lib/PathReporter'
 import D from 'od'
-import { BehaviorSubject } from 'rxjs'
+import { BehaviorSubject, Observable } from 'rxjs'
 import { webSocket } from 'rxjs/webSocket'
 import { match } from 'ts-pattern'
 import WebSocket from 'ws'
@@ -43,7 +43,7 @@ const debug = {
 export type BybitPublicWebsocket = {
   subscribe(
     request: BybitKlineSubscriptionRequest,
-  ): Promise<BehaviorSubject<BybitWebsocketKline[]>>
+  ): Promise<Observable<BybitWebsocketKline[]>>
 }
 
 export type BybitPublicWebsocketSettings = {
@@ -105,7 +105,7 @@ export const bybitPublicWebsocket = (
 
   const pending: Map<
     t.OutputOf<typeof BybitSubscriptionRequest>,
-    (value: BehaviorSubject<BybitChannelMessage[]>) => void
+    (value: Observable<BybitChannelMessage[]>) => void
   > = new Map()
 
   const subject = webSocket<BybitChannelMessage>({
@@ -122,7 +122,7 @@ export const bybitPublicWebsocket = (
 
   async function subscribe(
     request: BybitKlineSubscriptionRequest,
-  ): Promise<BehaviorSubject<BybitWebsocketKline[]>>
+  ): Promise<Observable<BybitWebsocketKline[]>>
   async function subscribe(request: BybitSubscriptionRequest) {
     return new Promise((resolve, reject) => {
       debug.ws(
@@ -273,7 +273,7 @@ export const bybitPublicWebsocket = (
                 promise: new Promise<void>((resolve) => resolve()),
                 subject,
               })
-              resolve(subject)
+              resolve(subject.asObservable())
             }),
           )
         })
