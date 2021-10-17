@@ -98,10 +98,14 @@ export const bybitPublicWebsocket = (
       const encodedRequest = BybitSubscriptionRequest.encode(request)
 
       if (pending.has(encodedRequest) || subscribers.has(encodedRequest)) {
-        reject({
-          type: 'already subscribed to this websocket topic',
-          stream: encodedRequest,
-        })
+        reject(
+          new Error(
+            JSON.stringify({
+              type: 'already subscribed to this websocket topic',
+              stream: encodedRequest,
+            }),
+          ),
+        )
       }
 
       pending.set(encodedRequest, resolve)
