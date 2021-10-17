@@ -1,6 +1,6 @@
 {
   "name": "@strong-roots-capital/bybit-api",
-  "version": "0.0.7",
+  "version": "0.0.0-development",
   "description": "TypeScript API for Bybit cryptocurrency exchange",
   "keywords": [
     "bybit",
@@ -25,10 +25,10 @@
     "dist/src/"
   ],
   "scripts": {
-    "prepublishOnly": "npm run clean && npm run compile",
+    "prepublishOnly": "npm run clean && npm run build",
     "ava": "ava -v",
     "clean": "rimraf --no-glob dist",
-    "compile": "tsc",
+    "build": "tsc",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "docs": "docs-ts",
     "lint": "eslint --ext ts . package.json",
@@ -36,8 +36,9 @@
     "lint-staged": "lint-staged",
     "prettier": "prettier --list-different src/**/*.ts test/**/*.ts",
     "prettier:fix": "prettier --write src/**/*.ts test/**/*.ts",
-    "test": "nyc ava",
-    "posttest": "npm run docs"
+    "test": "echo Here is where I would run nyc ava",
+    "posttest": "echo Here is where I would run npm run docs",
+    "semantic-release": "semantic-release"
   },
   "dependencies": {
     "@strong-roots-capital/ratlog-debug": "^1.0.3",
@@ -56,6 +57,7 @@
   },
   "devDependencies": {
     "@ericcrosson/eslint-config": "^2.0.0",
+    "@semantic-release/git": "^10.0.0",
     "@types/ws": "^7.4.7",
     "@typescript-eslint/eslint-plugin": "^4.11.1",
     "@typescript-eslint/parser": "^4.11.1",
@@ -77,6 +79,7 @@
     "pre-commit": "^1.2.2",
     "prettier": "2.2.1",
     "rimraf": "^3.0.2",
+    "semantic-release": "^18.0.0",
     "ts-node": "^9.1.1",
     "typescript": "^4.3.5"
   },
