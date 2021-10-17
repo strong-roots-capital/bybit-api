@@ -14,15 +14,11 @@ import { pipe, flow, constVoid } from 'fp-ts/function'
 import * as t from 'io-ts'
 import { nonEmptyArray } from 'io-ts-types'
 import * as PathReporter from 'io-ts/lib/PathReporter'
-import D from 'od'
 import { BehaviorSubject, Observable } from 'rxjs'
 import { webSocket } from 'rxjs/webSocket'
 import { match } from 'ts-pattern'
 import WebSocket from 'ws'
 
-import { BybitTimeframe } from './codecs/BybitTimeframe'
-import { BybitRestKlineResponse } from './codecs/rest/BybitRestKlineResponse'
-import { unsafeParse } from './codecs/unsafe-parse'
 import { BybitChannelMessage } from './codecs/ws/BybitChannelMessage'
 import {
   BybitKlineSubscriptionRequest,
@@ -32,7 +28,6 @@ import { BybitSubscriptionRequest } from './codecs/ws/BybitSubscriptionRequest'
 import { BybitSubscriptionResponse } from './codecs/ws/BybitSubscriptionResponse'
 import { BybitWebsocketKline } from './codecs/ws/BybitWebsocketKline'
 import { BybitWebsocketMessage } from './codecs/ws/BybitWebsocketMessage'
-import { bybitRestClient } from './rest'
 
 const debug = {
   warn: log.tag('warning'),
@@ -48,32 +43,6 @@ export type BybitPublicWebsocket = {
 
 export type BybitPublicWebsocketSettings = {
   testnet: boolean
-}
-
-const one = unsafeParse(t.Int, 1)
-
-const wsKline = ({
-  interval,
-  kline,
-  timestamp,
-}: {
-  interval: BybitTimeframe
-  kline: BybitRestKlineResponse
-  timestamp: Date
-}): BybitWebsocketKline => {
-  const end = D.add(interval.unit, interval.quantifier, kline.open_time)
-  return {
-    start: kline.open_time,
-    end,
-    open: kline.open,
-    close: kline.close,
-    high: kline.high,
-    low: kline.low,
-    volume: kline.volume,
-    turnover: kline.turnover,
-    timestamp,
-    confirm: end < timestamp,
-  }
 }
 
 const decodeBybitChannelMessage = (message: BybitWebsocketMessage) =>
@@ -96,11 +65,7 @@ export const bybitPublicWebsocket = (
 ): BybitPublicWebsocket => {
   const subscribers: Map<
     t.OutputOf<typeof BybitSubscriptionRequest>,
-    {
-      initialized: boolean
-      promise: Promise<void>
-      subject: BehaviorSubject<BybitChannelMessage[]>
-    }
+    BehaviorSubject<BybitChannelMessage[]>
   > = new Map()
 
   const pending: Map<
@@ -114,10 +79,6 @@ export const bybitPublicWebsocket = (
       : 'wss://stream.bybit.com/realtime',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     WebSocketCtor: WebSocket as any,
-  })
-
-  const restClient = bybitRestClient({
-    testnet: settings.testnet,
   })
 
   async function subscribe(
@@ -172,7 +133,6 @@ export const bybitPublicWebsocket = (
         .when(BybitWebsocketMessage.is, async (message) =>
           pipe(
             TE.Do,
-            TE.bind('topic', () => TE.of(message.topic)),
             TE.bind('data', () => decodeBybitChannelMessage(message)),
             TE.bindW('subscribee', () =>
               TE.fromEither(
@@ -193,62 +153,8 @@ export const bybitPublicWebsocket = (
                     'Error handling websocket data: ' + JSON.stringify(error),
                   ),
                 ),
-              ({ data, topic, subscribee }) => async () => {
-                if (!subscribee.initialized) {
-                  const openTime = pipe(
-                    data[0].start,
-                    D.subtract(topic.interval.unit, topic.interval.quantifier),
-                  )
-                  // sequence publication of the rest data
-                  subscribee.promise = subscribee.promise.then(async () =>
-                    // Note: Nobody is listening to these errors so they have to be fatal
-                    pipe(
-                      restClient.kline({
-                        symbol: topic.symbol,
-                        interval: topic.interval,
-                        from: openTime,
-                        limit: one,
-                      }),
-                      TE.fold(
-                        (error) =>
-                          T.fromIO(() => {
-                            throw new Error(
-                              'Unable to query most-recent complete candle: ' +
-                                JSON.stringify(error),
-                            )
-                          }),
-                        (response) =>
-                          T.fromIO(() => {
-                            const previousCandle = response.result.filter(
-                              (kline) =>
-                                kline.open_time.getTime() === openTime.getTime(),
-                            )
-                            if (!previousCandle[0]) {
-                              throw new Error(
-                                'Expected kline query to return previous candle',
-                              )
-                            }
-                            subscribee.initialized = true
-                            subscribee.subject.next([
-                              wsKline({
-                                interval: topic.interval,
-                                kline: previousCandle[0],
-                                timestamp: response.time_now,
-                              }),
-                            ])
-                          }),
-                      ),
-                      async (invokeTask) => invokeTask(),
-                    ),
-                  )
-                }
-
-                // then sequence publication of the websocket data
-                subscribee.promise = subscribee.promise.then(() =>
-                  subscribee.subject.next(data),
-                )
-
-                return subscribee.promise
+              ({ data, subscribee }) => async () => {
+                subscribee.next(data)
               },
             ),
             async (invokeTask) => invokeTask(),
@@ -268,11 +174,7 @@ export const bybitPublicWebsocket = (
           pipe(
             resolver,
             O.map((resolve) => {
-              subscribers.set(response.request.args[0], {
-                initialized: false,
-                promise: new Promise<void>((resolve) => resolve()),
-                subject,
-              })
+              subscribers.set(response.request.args[0], subject)
               resolve(subject.asObservable())
             }),
           )
